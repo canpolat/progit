@@ -460,60 +460,60 @@ Uzak uçbirim dalının adından başka bir adla yerel dal oluşturmak isterseni
 	Branch sf set up to track remote branch refs/remotes/origin/serverfix.
 	Switched to a new branch "sf"
 
-Şimdi, yereldeki sf dalı, otomatik olarak `origin/serverfix` dalına itme ve çekme işlemi yapabilecek.
+Şimdi, yereldeki `sf` dalı, otomatik olarak `origin/serverfix` dalına itme ve çekme işlemi yapabilecek.
 
 ### Uzak Uçbirim Dallarını Silmek ###
 
-Suppose you’re done with a remote branch — say, you and your collaborators are finished with a feature and have merged it into your remote’s `master` branch (or whatever branch your stable codeline is in). You can delete a remote branch using the rather obtuse syntax `git push [remotename] :[branch]`. If you want to delete your `serverfix` branch from the server, you run the following:
+Diyelim ki bir uzak uççbirimle olan işiniz bitmiş olsun - belirli bir özellik üzerinde yürtüttüğünüz çalışma uzak uçbirimin `master` dalıyla (ya da kararlı kod hangi dalda bulunuyorsa o dalla) birleştirilmiş  olsun. Bu durumda, uzak uçbrim dalını şu tuhaf komutu kullanarak silebilirsiniz `git push [uzakucbirimadi] :[daladi]`. Sunucudaki `serverfix` dalını silmek isterseniz şu komutu çalıştırabilirsiniz:
 
 	$ git push origin :serverfix
 	To git@github.com:schacon/simplegit.git
 	 - [deleted]         serverfix
 
-Boom. No more branch on your server. You may want to dog-ear this page, because you’ll need that command, and you’ll likely forget the syntax. A way to remember this command is by recalling the `git push [remotename] [localbranch]:[remotebranch]` syntax that we went over a bit earlier. If you leave off the `[localbranch]` portion, then you’re basically saying, “Take nothing on my side and make it be `[remotebranch]`.”
+Oldu da bitti maşallah. Sunucunuzdaki daldan kurtuldunuz. Kitabın bu sayfasının kenarını kıvırmak isteyebilirsiniz, çünkü bu komuta ihtiyacınız olacak ve muhtemelen komutun sentaksını unutacaksınız. Bu komutu hatırlamanıza yardımcı olabilecek bir şey de daha önce incelediğimiz `git push 8uzakucbirimadi] [yereldal]:[uzakucbirimdali]` komutunu hatırlamak olabilir. [yereldal] kısmını çıkardığınızda aşağı yukarı şunu demiş oluyorsunuz: “Yerel yazılım havuzundan hiçbir şey alma ve bunu [uzakucbirim] dalının yerine kopyala`.”
 
-## Rebasing ## Zemin, Kök, Temel
+## Aktarma ##
 
-In Git, there are two main ways to integrate changes from one branch into another: the `merge` and the `rebase`. In this section you’ll learn what rebasing is, how to do it, why it’s a pretty amazing tool, and in what cases you won’t want to use it.
+Git'te bir daldaki değişiklikleri diğeriyle bütünleştirmek (_integrate_) için kullanılan iki ana yol vardır: `merge` (birleştirme) ve `rebase` (aktarma). Bu bölümde aktarmanın ne olduğunu, nasıl yapılacağını, neden harika bir araç olduğunu ve hangi durumlarda bu yöntemi kullanmak istemeyeceğinizi öğreneceksiniz.
 
-### The Basic Rebase ###
+### Basit Aktarma ###
 
-If you go back to an earlier example from the Merge section (see Figure 3-27), you can see that you diverged your work and made commits on two different branches.
+Birleştirme bölümünde verdiğimiz bir örneğe geri dönecek olursanız (bkz. Figür 3-27), üzerinde çalıştığınız iki dalda ayrı ayrı kayıtlar yaparak bu iki dalı birbirinden uzaklaştırdığınızı hatırlayacaksınız.
 
 Insert 18333fig0327.png 
-Figure 3-27. Your initial diverged commit history.
+Figür 3-27. Birbirinden uzaklaşmış dallar.
 
-The easiest way to integrate the branches, as we’ve already covered, is the `merge` command. It performs a three-way merge between the two latest branch snapshots (C3 and C4) and the most recent common ancestor of the two (C2), creating a new snapshot (and commit), as shown in Figure 3-28.
+Dalları bütünleştirmek için kullanılabilecek en kolay yöntem `merge` komutudur. Bu komut, iki bellek kopyasının son kayıtlarıyla (C3 ve C4), bu ikisinin en son ortak atası (C2) arasında üç yönlü bir birleştirme işlemi yaparak yeni bir bellek kopyası (ve yeni bir kayıt) yaratır (bkz. Figür 3-28).
 
 Insert 18333fig0328.png 
-Figure 3-28. Merging a branch to integrate the diverged work history.
+Figür 3-28. Ayrışmış dalların birleştirme işlemiyle bütünleştirilmesi.
 
-However, there is another way: you can take the patch of the change that was introduced in C3 and reapply it on top of C4. In Git, this is called _rebasing_. With the `rebase` command, you can take all the changes that were committed on one branch and replay them on another one.
+Benzer bir sonuca başka bir yolla daha ulaşabilirsiniz: C3'te yapılan değişikliği yama olarak alıp C4 üzerinde yeniden uygulayabilirsiniz. Git'te buna _aktarma_ (_rebasing_) denir. `rebase` komutuyla, bir dalda yapılmış bütün değişiklikleri alıp bir başka dal üzerinde yeniden uygulayabilirsiniz.
 
-In this example, you’d run the following:
+Bu örnekte şu komutu çalıştırabilirdiniz:
 
 	$ git checkout experiment
 	$ git rebase master
 	First, rewinding head to replay your work on top of it...
 	Applying: added staged command
 
-It works by going to the common ancestor of the two branches (the one you’re on and the one you’re rebasing onto), getting the diff introduced by each commit of the branch you’re on, saving those diffs to temporary files, resetting the current branch to the same commit as the branch you are rebasing onto, and finally applying each change in turn. Figure 3-29 illustrates this process.
+Bu işlem şöyle çalışır: iki dalın (üzerinde olduğunuz dal ve aktarma yaptığınız dal) ortak atasını bulup üzerinde bulunduğunuz daldaki herbir kaydı yama olarak geçici dosyalarda depolar, üzerinde bulunduğunuz dalı aktarma yaptığınız dalın son kaydına taşır, son olarak da depolanmış kayıtları sırayla uygular. Figür 3-29 bu süreci gösteriyor.
 
 Insert 18333fig0329.png 
-Figure 3-29. Rebasing the change introduced in C3 onto C4.
+Figür 3-29. C3 değişikliğinin C4 üzerine aktarımı.
 
-At this point, you can go back to the master branch and do a fast-forward merge (see Figure 3-30).
+Bu noktada, `master` dalına geçiş yapıp Figür 3-30'da olduğu gibi bu dalı ileri sarabiilirsiniz. 
 
 Insert 18333fig0330.png 
-Figure 3-30. Fast-forwarding the master branch.
+Figür 3-30. `master` dalını ileri sarmak.
 
-Now, the snapshot pointed to by C3' is exactly the same as the one that was pointed to by C5 in the merge example. There is no difference in the end product of the integration, but rebasing makes for a cleaner history. If you examine the log of a rebased branch, it looks like a linear history: it appears that all the work happened in series, even when it originally happened in parallel.
+C3' ile gösterilen bellek kopyası, birleştirme ile elde edilen C5 bellek kopyasıyla birebir aynıdır. İki bütünleştirmenin nihai sonucu arasında hiç fark yoktur, fakat aktarmayla daha temiz bir tarihçe elde edilir. Aktarma uygulanmış bir dalın tarihçesinin tek bir çizgiyi takip ettiği görülür: çalışma birbirine paralel hatlarda ilerlediği halde sanki arka arkaya gerçekleşmiş gibi görünür.
 
-Often, you’ll do this to make sure your commits apply cleanly on a remote branch — perhaps in a project to which you’re trying to contribute but that you don’t maintain. In this case, you’d do your work in a branch and then rebase your work onto `origin/master` when you were ready to submit your patches to the main project. That way, the maintainer doesn’t have to do any integration work — just a fast-forward or a clean apply.
+Çoğunlukla, kayıtların bir uzak uçbirim dalına pürüz çıkarmadan uygulanabileceğinden emin olmak için bu yöntem kullanılır —mesela, katkıda bulunduğunuz ancak bakımından sorumlu olmadığınız bir projeye yama gönderirken. Bu durumda, belirli bir dal üzerindeki çalışmanızı tamamladıktan sonra, bu dalı projenin `origin/master` dalına aktarırsınız. Böylece, projenin bakım sorumlusunun herhengi bir bütünleştirme işlemi yapması gerekmez —`master`'ı ileri sarması ya da ya da yamayı pürüzsüz biçimde uygulaması yeterli olacaktır.
 
-Note that the snapshot pointed to by the final commit you end up with, whether it’s the last of the rebased commits for a rebase or the final merge commit after a merge, is the same snapshot — it’s only the history that is different. Rebasing replays changes from one line of work onto another in the order they were introduced, whereas merging takes the endpoints and merges them together.
+Unutmayınn, ister aktarma işlemiyle (_rebase_) isterse birleştirme (_merge_) işlemiyle ulaşılmış olsun, son kaydın işaret ettiği bellek kopyası aynı olacaktır —değişen yalnızca tarihçenin görünümüdür. Aktarmada bir dalda yapılan çalışma, tarih sırasına göre bir başka dal üzerinde yeniden uygulanır, birleştirmedeyse iki dalın sonuçları alınıp birleştirilir.
 
-### More Interesting Rebases ###
+### Daha İlginç Aktarma Senaryoları ###
 
 You can also have your rebase replay on something other than the rebase branch. Take a history like Figure 3-31, for example. You branched a topic branch (`server`) to add some server-side functionality to your project, and made a commit. Then, you branched off that to make the client-side changes (`client`) and committed a few times. Finally, you went back to your server branch and did a few more commits.
 
